@@ -8,7 +8,6 @@
 * ELK - 7.3.2
 * ElastAlert - 0.2.1
 * Helm - 2.14.3
--
 * Elasticsearch Endpoint -
   * host - elasticsearch-master:9200
   * TLS - false
