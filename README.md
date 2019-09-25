@@ -2,50 +2,81 @@
 
 [elastalert](https://github.com/Yelp/elastalert) is a simple framework for alerting on anomalies, spikes, or other patterns of interest from data in Elasticsearch.
 
-## TL;DR;
+## Pre-configs and Versions
 
-For ES 5.x:
+* Kubernetes - 1.14.6
+* ELK - 7.3.2
+* ElastAlert - 0.2.1
+* Helm - 2.14.3
+-
+* Elasticsearch Endpoint -
+  * host - elasticsearch-master:9200
+  * TLS - false
+* SMTP settings -
+  * smtp_host - smtp.sendgrid.net
+  * smtp_port - 587
+  * smtp_auth_file - /opt/config-smtp/smtp-auth.yaml
+  * from_addr - elastalert@miniasp.com
+  * notify_email - peihua@miniasp.com
+* SMTP credential secret object - elastalert-smtp-auth
+* SMTP credential secret file name - smtp-auth.yaml
+* Run interval - 1 minute
+* Buffer time - 15 minutes
 
-```console
-$ helm install stable/elastalert
-```
-
-For ES 6 and newer:
-
-```console
-$ helm install stable/elastalert --set writebackIndex=elastalert
-
-# Open Dev Tools on Kibana and send the below.
-# Otherwise elastalert ends up with errors like "RequestError: TransportError(400, u'search_phase_execution_exception', u'No mapping found for [alert_time] in order to sort on')"
-PUT /elastalert/_mapping/elastalert
-{
-  "properties": {
-      "alert_time": {"type": "date"}
-  }
-}
-```
-
-See the comment in the default `values.yaml` to know why `writebackIndex` is required for ES 6.x.
-
-## Installing the Chart
-
-To install the chart with the release name `my-release`:
+## (If needed) Install ELK Stack
 
 ```console
-$ helm install --name my-release stable/elastalert
+helm install --name elasticsearch --namespace elk elastic/elasticsearch
+helm install --name kibana --namespace elk elastic/kibana \
+--set service.type=LoadBalancer
+helm install --name filebeat --namespace elk elastic/filebeat
 ```
 
-The command deploys elastalert on the Kubernetes cluster in the default configuration. The [configuration](#configuration) section lists the parameters that can be configured during installation.
+## Installing the Chart;
+
+```console
+# Add user and password entry for smtp credentials
+
+vim smtp-auth.yaml
+kubectl create secret generic -n elk elastalert-smtp-auth --from-file=./smtp_auth.yaml
+
+# Install chart
+
+helm install --name elastalert --namespace elk .
+```
 
 ## Uninstalling the Chart
 
-To uninstall/delete the my-release deployment:
-
 ```console
-$ helm delete my-release
+helm delete --purge elastalert
+kubectl delete secret -n elk elastalert-smtp-auth
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+## Some Scripts
+
+```console
+# Create job that echo bad every 5 seconds
+
+kubectl create job --image=alpine echo-bad -- /bin/sh -c "while true; do echo bad; sleep 5; done"
+
+# Create job that echo worse every 5 seconds
+
+kubectl create job --image=alpine echo-worse -- /bin/sh -c "while true; do echo worse; sleep 5; done"
+
+# Testing rules
+
+kubectl exec -n elk $(kubectl get pod -n elk -l app=elastalert -o name) -- \
+elastalert-test-rule --config=../config/elastalert_config.yaml ../rules/bad_output.yaml
+
+# Testing rules, 1 hour ago
+
+kubectl exec -n elk -it $(kubectl get pod -n elk -l app=elastalert -o name) -- \
+elastalert-test-rule --config=../config/elastalert_config.yaml ../rules/bad_output.yaml --start $(date -u --date="1 hour ago" +%Y-%m-%dT%H:%M:%S)
+
+# Listing indices
+
+kubectl exec -n elk elasticsearch-master-0 -- curl -s localhost:9200/_cat/indices?v
+```
 
 ## Configuration
 
