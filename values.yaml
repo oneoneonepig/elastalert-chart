@@ -62,8 +62,8 @@ extraConfigOptions:
   smtp_host: smtp.sendgrid.net
   smtp_port: 587
   smtp_auth_file: /opt/config-smtp/smtp-auth.yaml
-  from_addr: elastalert@miniasp.com
-  notify_email: peihua@miniasp.com
+  from_addr: elastalert@domain.com
+  notify_email: someone@domain.com
 
   # # Options to propagate to all rules, e.g. a common slack_webhook_url or kibana_url
   # # Please note at the time of implementing this value, it will not work for required_locals
@@ -90,7 +90,7 @@ rules:
     exponential_realert:
       hours: 1
     email:
-    - "peihua@miniasp.com"  
+    - "someone@domain.com"  
 
 # Support using node selectors and tolerations
 # nodeSelector:
