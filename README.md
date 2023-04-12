@@ -15,8 +15,8 @@
   * smtp_host - smtp.sendgrid.net
   * smtp_port - 587
   * smtp_auth_file - /opt/config-smtp/smtp-auth.yaml
-  * from_addr - elastalert@miniasp.com
-  * notify_email - peihua@miniasp.com
+  * from_addr - fromuser@domain.com
+  * notify_email - notify@domain.com
 * SMTP credential secret object - elastalert-smtp-auth
 * SMTP credential secret file name - smtp-auth.yaml
 * Run interval - 1 minute
